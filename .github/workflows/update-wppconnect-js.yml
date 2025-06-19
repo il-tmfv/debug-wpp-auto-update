@@ -89,8 +89,6 @@ jobs:
         labels: |
           dependencies
           automated
-        assignees: |
-          ${{ github.actor }}
 
     - name: Notify Rocket.Chat
       if: steps.check_update.outputs.update_needed == 'true'
