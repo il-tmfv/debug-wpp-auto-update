@@ -4,6 +4,8 @@ on:
   schedule:
     # Run every day at 5:00 UTC
     - cron: '0 5 * * *'
+    # Run every day at 11:15 UTC
+    - cron: '15 11 * * *'
   workflow_dispatch:
     # Manual trigger via GitHub interface
 
