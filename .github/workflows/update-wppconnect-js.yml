@@ -69,6 +69,7 @@ jobs:
         echo "File updated successfully"
 
     - name: Create Pull Request
+      id: create_pr
       if: steps.check_update.outputs.update_needed == 'true'
       uses: peter-evans/create-pull-request@v5
       with:
@@ -90,3 +91,8 @@ jobs:
           automated
         assignees: |
           ${{ github.actor }}
+
+    - name: Notify Rocket.Chat
+      if: steps.check_update.outputs.update_needed == 'true'
+      run: |
+        curl -X POST -H 'Content-Type: application/json' --data '{"text":"@dev___ ревью обновления WPP: ${{ steps.create_pr.outputs.pull-request-url }}"}' https://rocket.chatpush.ru/hooks/${{ secrets.ROCKET_WPP_ALERT_TOKEN }}
