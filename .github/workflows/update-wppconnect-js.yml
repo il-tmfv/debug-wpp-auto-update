@@ -1,0 +1,92 @@
+name: Update @wppconnect/wa-js
+
+on:
+  schedule:
+    # Run every day at 5:00 UTC
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    # Manual trigger via GitHub interface
+
+jobs:
+  update-wppconnect-js:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Get latest release info
+      id: latest_release
+      run: |
+        latest_release=$(curl -s https://api.github.com/repos/wppconnect-team/wa-js/releases/latest)
+        latest_version=$(echo "$latest_release" | jq -r '.tag_name')
+        download_url=$(echo "$latest_release" | jq -r '.assets[0].browser_download_url')
+
+        echo "version=$latest_version" >> $GITHUB_OUTPUT
+        echo "download_url=$download_url" >> $GITHUB_OUTPUT
+        echo "Latest version: $latest_version"
+        echo "Download URL: $download_url"
+
+    - name: Get current version
+      id: current_version
+      run: |
+        current_version=$(grep -o "wppconnect-team/wa-js v[0-9.]*" priv/data/wppconnect-wa.js | sed 's/wppconnect-team\/wa-js v//')
+        echo "version=$current_version" >> $GITHUB_OUTPUT
+        echo "Current version: $current_version"
+
+    - name: Check if update is needed
+      id: check_update
+      run: |
+        if [ "${{ steps.current_version.outputs.version }}" != "${{ steps.latest_release.outputs.version }}" ]; then
+          echo "Update needed from ${{ steps.current_version.outputs.version }} to ${{ steps.latest_release.outputs.version }}"
+          echo "update_needed=true" >> $GITHUB_OUTPUT
+        else
+          echo "No update needed. Current version ${{ steps.current_version.outputs.version }} is up to date."
+          echo "update_needed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Download and update wppconnect-wa.js
+      if: steps.check_update.outputs.update_needed == 'true'
+      run: |
+        # Download the new version of the file
+        curl -L -o priv/data/wppconnect-wa.js "${{ steps.latest_release.outputs.download_url }}"
+
+        # Check if the file was downloaded successfully
+        if [ ! -f "priv/data/wppconnect-wa.js" ]; then
+          echo "Failed to download the file"
+          exit 1
+        fi
+
+        # Verify that the file contains the expected version
+        if ! grep -q "wppconnect-team/wa-js ${{ steps.latest_release.outputs.version }}" priv/data/wppconnect-wa.js; then
+          echo "Downloaded file doesn't contain expected version"
+          exit 1
+        fi
+
+        echo "File updated successfully"
+
+    - name: Create Pull Request
+      if: steps.check_update.outputs.update_needed == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "chore: update @wppconnect/wa-js to ${{ steps.latest_release.outputs.version }}"
+        title: "chore: update @wppconnect/wa-js to ${{ steps.latest_release.outputs.version }}"
+        body: |
+          Automatic update of @wppconnect/wa-js to version ${{ steps.latest_release.outputs.version }}
+
+          Changes:
+          - Updated `priv/data/wppconnect-wa.js` from version ${{ steps.current_version.outputs.version }} to ${{ steps.latest_release.outputs.version }}
+
+          This PR was created automatically by GitHub Action.
+        branch: update-wppconnect-js-${{ steps.latest_release.outputs.version }}
+        branch-suffix: timestamp
+        delete-branch: true
+        labels: |
+          dependencies
+          automated
+        assignees: |
+          ${{ github.actor }}
