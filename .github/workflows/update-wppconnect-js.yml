@@ -2,8 +2,10 @@ name: Update @wppconnect/wa-js
 
 on:
   schedule:
+    # Run every day at 5:00 UTC
+    - cron: '0 5 * * *'
     # Run every day at 11:15 UTC
-    - cron: '16 11 * * *'
+    - cron: '0 12 * * *'
   workflow_dispatch:
     # Manual trigger via GitHub interface
 
