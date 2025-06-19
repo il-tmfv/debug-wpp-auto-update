@@ -33,7 +33,7 @@ jobs:
     - name: Get current version
       id: current_version
       run: |
-        current_version=$(grep -o "wppconnect-team/wa-js v[0-9.]*" priv/data/wppconnect-wa.js | sed 's/wppconnect-team\/wa-js v//')
+        current_version=$(grep -o "wppconnect-team/wa-js v[0-9.]*" priv/data/wppconnect-wa.js | sed 's/wppconnect-team\/wa-js //')
         echo "version=$current_version" >> $GITHUB_OUTPUT
         echo "Current version: $current_version"
 
