@@ -31,8 +31,8 @@ jobs:
         temp_file=$(mktemp)
         curl -s -L -o "$temp_file" "$download_url"
         
-        # Extract version from the file content (first few lines contain the version info)
-        nightly_version=$(head -n 1 "$temp_file" | grep -o "wppconnect-team/wa-js v[0-9.]*\(-[a-zA-Z0-9.]*\)\?" | sed 's/wppconnect-team\/wa-js //')
+        # Extract version from the file content (same approach as current version parsing)
+        nightly_version=$(grep -o "wppconnect-team/wa-js v[0-9.]*\(-[a-zA-Z0-9.]*\)\?" "$temp_file" | sed 's/wppconnect-team\/wa-js //')
         
         # Clean up temp file
         rm "$temp_file"
@@ -143,6 +143,6 @@ jobs:
         echo "Existing PR(s): ${{ steps.check_existing_pr.outputs.existing_pr_numbers }}"
 
     - name: Notify Rocket.Chat
-      if: steps.check_update.outputs.update_needed == 'true' && steps.check_existing_pr.outputs.pr_exists == 'false'
+      if: steps.check_update.outputs.update_needed == 'true' && steps.check_existing_pr.outputs.pr_exists == 'false' && steps.create_pr.outputs.pull-request-url != ''
       run: |
         curl -X POST -H 'Content-Type: application/json' --data "{\"text\":\"TESTdev ревью обновления WPP (pre-release): ${{ steps.create_pr.outputs.pull-request-url }}\"}" https://rocket.chatpush.ru/hooks/${{ secrets.ROCKET_WPP_ALERT_TOKEN }} 

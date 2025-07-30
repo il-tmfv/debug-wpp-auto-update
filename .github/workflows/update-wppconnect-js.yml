@@ -129,6 +129,6 @@ jobs:
         echo "Existing PR(s): ${{ steps.check_existing_pr.outputs.existing_pr_numbers }}"
 
     - name: Notify Rocket.Chat
-      if: steps.check_update.outputs.update_needed == 'true' && steps.check_existing_pr.outputs.pr_exists == 'false'
+      if: steps.check_update.outputs.update_needed == 'true' && steps.check_existing_pr.outputs.pr_exists == 'false' && steps.create_pr.outputs.pull-request-url != ''
       run: |
         curl -X POST -H 'Content-Type: application/json' --data "{\"text\":\"TESTdev ревью обновления WPP: ${{ steps.create_pr.outputs.pull-request-url }}\"}" https://rocket.chatpush.ru/hooks/${{ secrets.ROCKET_WPP_ALERT_TOKEN }}
